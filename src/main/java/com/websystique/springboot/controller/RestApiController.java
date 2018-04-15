@@ -34,45 +34,39 @@ public class RestApiController {
 	public static final Logger logger = LoggerFactory.getLogger(RestApiController.class);
 
 	@Autowired
-	ProducerService userService;
+	ProducerService producerService;
 
-	@RequestMapping(value = "/sendMessageToTopic", method = RequestMethod.POST, produces = "application/json", consumes="application/json")
-	public ResponseEntity<?> sendMessageToTopic(@RequestBody String stringToParse)
+	@RequestMapping(value = "/produce", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+	public ResponseEntity<?> produce(@RequestBody String stringToParse)
 			throws JsonProcessingException, IOException {
 
+		String response = producerService.handleRequest(stringToParse);
+
+		System.err.println("Inside RestApiController.produce");
 		
-		ObjectMapper mapper = new ObjectMapper();
-		System.err.println(stringToParse);
-		JsonNode jsonNode = mapper.readTree(stringToParse);
-	
-		// Configure the Producer
-		Properties configProperties = new Properties();
-		configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-		configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-		configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+		return new ResponseEntity<String>(response, HttpStatus.OK);
+	}
 
-		Producer<String, JsonNode> producer = new KafkaProducer<String, JsonNode>(configProperties);
+	public String findKeyValue(JsonNode json, String key) {
 
-		ProducerRecord<String, JsonNode> rec = new ProducerRecord<String, JsonNode>("test", jsonNode);
-		producer.send(rec);
+		Iterator<String> fieldNames = json.fieldNames();
+		while (fieldNames.hasNext()) {
+			String fieldName = fieldNames.next();
+			if (fieldName.equals(key)) {
+				JsonNode fieldValue = json.get(fieldName);
+				return fieldValue.asText();
+			}
+		}
 
-		producer.close();
-
-		return new ResponseEntity<String>("{\"response\": \"Ok Got It ! Wait Please!\"}", HttpStatus.OK);
+		return "UNDEFINED";
 	}
 	
-	public String findKeyValue(JsonNode json, String key) {
-    	
-		Iterator<String> fieldNames = json.fieldNames();
-		    while(fieldNames.hasNext()){
-		        String fieldName = fieldNames.next();
-		        if(fieldName.equals(key)) {
-		        		JsonNode fieldValue = json.get(fieldName);
-		        		return fieldValue.asText();
-		        }
-		    }
-				
-			return "UNDEFINED";
-		}
-	
+	@RequestMapping(value = "/hello", method = RequestMethod.GET, produces = "application/json", consumes = "application/json")
+	public ResponseEntity<?> hello()
+			throws JsonProcessingException, IOException {
+
+
+		return new ResponseEntity<String>("{\"key\": \"Hello\"}", HttpStatus.OK);
+	}
+
 }

@@ -1,3 +1,3 @@
 server:
   port: 8080
-  contextPath: /SpringBootRestApi
+  contextPath: /kafka-rest-json-producer
